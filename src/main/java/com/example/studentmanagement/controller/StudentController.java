@@ -2,12 +2,16 @@ package com.example.studentmanagement.controller;
 
 import com.example.studentmanagement.model.Student;
 import com.example.studentmanagement.service.StudentService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
-@RestController  // Tells Spring this class will handle HTTP requests
-@RequestMapping("/api/students")  // Base URL
+import java.util.List;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/students")
 public class StudentController {
 
     private final StudentService service;
@@ -16,31 +20,28 @@ public class StudentController {
         this.service = service;
     }
 
-    // GET all students: /api/students
+    @PostMapping
+    public Student create(@Valid @RequestBody Student student) {
+        return service.createStudent(student);
+    }
+
+    @PutMapping("/{id}")
+    public Student update(@PathVariable Long id, @Valid @RequestBody Student student) {
+        return service.updateStudent(id, student);
+    }
+
     @GetMapping
     public List<Student> getAll() {
         return service.getAllStudents();
     }
 
-    // GET student by ID: /api/students/1
     @GetMapping("/{id}")
-    public Student getById(@PathVariable Long id) {
-        return service.getStudentById(id).orElse(null);
+    public ResponseEntity<Student> getById(@PathVariable Long id) {
+        return service.getStudentById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // POST: Create new student
-    @PostMapping
-    public Student create(@RequestBody Student student) {
-        return service.createStudent(student);
-    }
-
-    // PUT: Update student
-    @PutMapping("/{id}")
-    public Student update(@PathVariable Long id, @RequestBody Student student) {
-        return service.updateStudent(id, student);
-    }
-
-    // DELETE student
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.deleteStudent(id);

@@ -1,6 +1,8 @@
 package com.example.studentmanagement.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
@@ -12,27 +14,26 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Student name is required")
     private String name;
 
+    @Email(message = "Email should be valid")
+    @NotBlank(message = "Email is required")
     private String email;
-
     // Many students belong to one course
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 
-    // A student can take many subjects, and each subject can be taken by many students
+    // A student can take many subjects, and each subject can be taken by many
+    // students
     @ManyToMany
-    @JoinTable(
-        name = "student_subjects",
-        joinColumns = @JoinColumn(name = "student_id"),
-        inverseJoinColumns = @JoinColumn(name = "subject_id")
-    )
+    @JoinTable(name = "student_subjects", joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns = @JoinColumn(name = "subject_id"))
     private List<Subject> subjects;
 
     // === Constructors ===
-    public Student() {}
+    public Student() {
+    }
 
     public Student(String name, String email, Course course, List<Subject> subjects) {
         this.name = name;
@@ -42,18 +43,43 @@ public class Student {
     }
 
     // === Getters and Setters ===
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return name;
+    }
 
-    public Course getCourse() { return course; }
-    public void setCourse(Course course) { this.course = course; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public List<Subject> getSubjects() { return subjects; }
-    public void setSubjects(List<Subject> subjects) { this.subjects = subjects; }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public List<Subject> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(List<Subject> subjects) {
+        this.subjects = subjects;
+    }
 }
