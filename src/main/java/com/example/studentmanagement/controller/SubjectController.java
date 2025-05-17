@@ -2,6 +2,8 @@ package com.example.studentmanagement.controller;
 
 import com.example.studentmanagement.model.Subject;
 import com.example.studentmanagement.service.SubjectService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,28 +18,37 @@ public class SubjectController {
         this.service = service;
     }
 
-    @GetMapping
-    public List<Subject> getAll() {
-        return service.getAllSubjects();
-    }
-
-    @GetMapping("/{id}")
-    public Subject getById(@PathVariable Long id) {
-        return service.getSubjectById(id).orElse(null);
-    }
-
     @PostMapping
     public Subject create(@RequestBody Subject subject) {
         return service.createSubject(subject);
     }
 
-    @PutMapping("/{id}")
-    public Subject update(@PathVariable Long id, @RequestBody Subject subject) {
-        return service.updateSubject(id, subject);
+    @GetMapping
+    public List<Subject> getAll() {
+        return service.getAllSubjects();
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        service.deleteSubject(id);
-    }
+   @GetMapping("/{id}")
+public ResponseEntity<Subject> getById(@PathVariable Long id) {
+    return service.getSubjectById(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+}
+
+@PutMapping("/{id}")
+public ResponseEntity<Subject> update(@PathVariable Long id, @RequestBody Subject updatedSubject) {
+    return service.getSubjectById(id)
+        .map(existing -> {
+            existing.setTitle(updatedSubject.getTitle());
+            existing.setTeacher(updatedSubject.getTeacher());
+            return ResponseEntity.ok(service.createSubject(existing));
+        })
+        .orElse(ResponseEntity.notFound().build());
+}
+
+@DeleteMapping("/{id}")
+public void delete(@PathVariable Long id) {
+    service.deleteSubject(id);
+}
+
 }
