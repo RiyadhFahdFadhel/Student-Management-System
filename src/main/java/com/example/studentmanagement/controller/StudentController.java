@@ -5,7 +5,9 @@ import com.example.studentmanagement.service.StudentService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import jakarta.validation.Valid;
@@ -46,4 +48,19 @@ public class StudentController {
     public void delete(@PathVariable Long id) {
         service.deleteStudent(id);
     }
+
+    @GetMapping("/paged")
+public Page<Student> getStudentsPaged(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size,
+    @RequestParam(required = false) String course
+) {
+    Pageable pageable = PageRequest.of(page, size);
+    if (course != null) {
+        return service.getStudentsByCourse(course, pageable);
+    } else {
+        return service.getAllStudentsPaged(pageable);
+    }
+}
+
 }

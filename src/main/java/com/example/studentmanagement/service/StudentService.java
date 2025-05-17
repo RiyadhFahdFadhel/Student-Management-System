@@ -2,6 +2,9 @@ package com.example.studentmanagement.service;
 
 import com.example.studentmanagement.model.Student;
 import com.example.studentmanagement.repository.StudentRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,4 +53,13 @@ public class StudentService {
     public void deleteStudent(Long id) {
         repo.deleteById(id);
     }
+
+    public Page<Student> getAllStudentsPaged(Pageable pageable) {
+    return repo.findAll(pageable);
+}
+
+public Page<Student> getStudentsByCourse(String courseName, Pageable pageable) {
+    return repo.findByCourse_Name(courseName, pageable);
+}
+
 }
