@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+
+    <div class="container">
+        <h2>🎓 Add Course</h2>
+        <form id="courseForm" class="mb-5">
+            <div class="mb-3">
+                <input type="hidden" id="courseId">
+                <label for="courseName" class="form-label">Course Name</label>
+                <input type="text" class="form-control" id="courseName" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Course</button>
+        </form>
+
+        <h4>📚 Courses List</h4>
+        <ul id="courseList" class="list-group mb-5"></ul>
+
+        <hr>
+
+        <h2>👨‍🏫 Add Teacher</h2>
+        <form id="teacherForm" class="mb-5">
+            <div class="mb-3">
+                <input type="hidden" id="teacherId">
+                <label for="teacherName" class="form-label">Teacher Name</label>
+                <input type="text" class="form-control" id="teacherName" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Teacher</button>
+        </form>
+
+        <h4>🧑‍🏫 Teachers List</h4>
+        <ul id="teacherList" class="list-group"></ul>
+
+        <hr>
+
+<h2>📘 Add Subject</h2>
+<form id="subjectForm" class="mb-5">
+    <div class="mb-3">
+        <label for="subjectTitle" class="form-label">Subject Title</label>
+        <input type="text" class="form-control" id="subjectTitle" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="subjectTeacher" class="form-label">Assign Teacher</label>
+        <select class="form-select" id="subjectTeacher" required></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Subject</button>
+</form>
+
+<h4>📚 Subject List</h4>
+<ul id="subjectList" class="list-group mb-5"></ul>
+
+    </div>
+
+    <script>
+        const API = "http://localhost:8080/api";
+
+        // === Courses ===
+    document.getElementById("courseForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const id = document.getElementById("courseId").value;
+    const name = document.getElementById("courseName").value;
+
+    const course = { name };
+
+    const method = id ? "PUT" : "POST";
+    const url = id ? `${API}/courses/${id}` : `${API}/courses`;
+
+    await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(course)
+    });
+
+    document.getElementById("courseForm").reset();
+    document.getElementById("courseId").value = "";
+    loadCourses();
+});
+
+
+        async function loadCourses() {
+    const res = await fetch(`${API}/courses`);
+    const data = await res.json();
+    const list = document.getElementById("courseList");
+    list.innerHTML = '';
+    data.forEach(course => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerHTML = `
+            <span>${course.name}</span>
+            <div>
+                <button class="btn btn-warning btn-sm me-2" onclick="editCourse(${course.id})">✏</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCourse(${course.id})">🗑</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+async function editCourse(id) {
+    const res = await fetch(`${API}/courses/${id}`);
+    const course = await res.json();
+
+    document.getElementById("courseId").value = course.id;
+    document.getElementById("courseName").value = course.name;
+    window.scrollTo(0, 0);
+}
+
+async function deleteCourse(id) {
+    if (confirm("Are you sure you want to delete this course?")) {
+        await fetch(`${API}/courses/${id}`, {
+            method: "DELETE"
+        });
+        loadCourses();
+    }
+}
+
+
+        // === Teachers ===
+      document.getElementById("teacherForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const id = document.getElementById("teacherId").value;
+    const name = document.getElementById("teacherName").value;
+
+    const teacher = { name };
+
+    const method = id ? "PUT" : "POST";
+    const url = id ? `${API}/teachers/${id}` : `${API}/teachers`;
+
+    await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(teacher)
+    });
+
+    document.getElementById("teacherForm").reset();
+    document.getElementById("teacherId").value = "";
+    loadTeachers();
+    loadTeachersForSubjectForm(); // update dropdown
+});
+
+      async function loadTeachers() {
+    const res = await fetch(`${API}/teachers`);
+    const data = await res.json();
+    const list = document.getElementById("teacherList");
+    list.innerHTML = '';
+    data.forEach(teacher => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+        li.innerHTML = `
+            <span>${teacher.name}</span>
+            <div>
+                <button class="btn btn-warning btn-sm me-2" onclick="editTeacher(${teacher.id})">✏</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${teacher.id})">🗑</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+  async function editTeacher(id) {
+    const res = await fetch(`${API}/teachers/${id}`);
+    const teacher = await res.json();
+
+    document.getElementById("teacherId").value = teacher.id;
+    document.getElementById("teacherName").value = teacher.name;
+    window.scrollTo(0, 0);
+}
+
+async function deleteTeacher(id) {
+    if (confirm("Are you sure you want to delete this teacher?")) {
+        await fetch(`${API}/teachers/${id}`, {
+            method: "DELETE"
+        });
+        loadTeachers();
+    }
+}
+
+
+
+        // === Load teachers into subject dropdown ===
+async function loadTeachersForSubjectForm() {
+    const res = await fetch(`${API}/teachers`);
+    const data = await res.json();
+    const select = document.getElementById("subjectTeacher");
+    select.innerHTML = ''; // Clear previous
+    data.forEach(teacher => {
+        const option = document.createElement("option");
+        option.value = teacher.id;
+        option.textContent = teacher.name;
+        select.appendChild(option);
+    });
+}
+
+// === Add subject ===
+document.getElementById("subjectForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const title = document.getElementById("subjectTitle").value;
+    const teacherId = document.getElementById("subjectTeacher").value;
+
+    const subject = {
+        title,
+        teacher: { id: teacherId }
+    };
+
+    await fetch(`${API}/subjects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subject)
+    });
+
+    document.getElementById("subjectForm").reset();
+    loadSubjects();
+});
+
+// === Load subjects list ===
+async function loadSubjects() {
+    const res = await fetch(`${API}/subjects`);
+    const data = await res.json();
+    const list = document.getElementById("subjectList");
+    list.innerHTML = '';
+    data.forEach(subject => {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.textContent = `${subject.title} — Teacher: ${subject.teacher?.name || 'Unassigned'}`;
+        list.appendChild(li);
+    });
+}
+
+
+     loadCourses();
+loadTeachers();
+loadTeachersForSubjectForm(); // 🔹 For subject form
+loadSubjects();               // 🔹 To show subject list
+    </script>
+</body>
+</html>

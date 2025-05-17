@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+
+    <div class="container">
+        <h2>📘 Add New Student</h2>
+        <form id="studentForm">
+            <div class="mb-3">
+                <input type="hidden" id="studentId">
+                <label for="name" class="form-label">Student Name</label>
+                <input type="text" class="form-control" id="name" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email">
+            </div>
+
+            <div class="mb-3">
+                <label for="courseSelect" class="form-label">Course</label>
+                <select class="form-select" id="courseSelect"></select>
+            </div>
+
+            <div class="mb-3">
+                <label for="subjectSelect" class="form-label">Subjects</label>
+                <select class="form-select" id="subjectSelect" multiple></select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Student</button>
+        </form>
+
+        <hr>
+
+        <h3 class="mt-5">📋 Students</h3>
+        <ul id="studentList" class="list-group mt-2"></ul>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8080/api";
+
+        async function loadCourses() {
+            const res = await fetch(`${API_BASE}/courses`);
+            const data = await res.json();
+            const courseSelect = document.getElementById("courseSelect");
+            data.forEach(course => {
+                const option = document.createElement("option");
+                option.value = course.id;
+                option.textContent = course.name;
+                courseSelect.appendChild(option);
+            });
+        }
+
+        async function loadSubjects() {
+            const res = await fetch(`${API_BASE}/subjects`);
+            const data = await res.json();
+            const subjectSelect = document.getElementById("subjectSelect");
+            data.forEach(subject => {
+                const option = document.createElement("option");
+                option.value = subject.id;
+                option.textContent = subject.title;
+                subjectSelect.appendChild(option);
+            });
+        }
+
+        async function loadStudents() {
+            const res = await fetch(`${API_BASE}/students`);
+            const data = await res.json();
+            const list = document.getElementById("studentList");
+            list.innerHTML = '';
+            data.forEach(student => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+    const subjects = student.subjects?.map(s => s.title).join(', ') || 'None';
+    const course = student.course?.name || 'None';
+
+    li.innerHTML = `
+        <div>
+            <strong>${student.name}</strong> (${student.email})<br>
+            Course: ${course}<br>
+            Subjects: ${subjects}
+        </div>
+        <div>
+            <button class="btn btn-sm btn-warning me-2" onclick="editStudent(${student.id})">✏</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent(${student.id})">🗑</button>
+        </div>
+    `;
+
+    list.appendChild(li);
+});
+
+        }
+
+        async function editStudent(id) {
+    const res = await fetch(`${API_BASE}/students/${id}`);
+    const student = await res.json();
+    
+
+    document.getElementById("studentId").value = student.id;
+    document.getElementById("name").value = student.name;
+    document.getElementById("email").value = student.email;
+    document.getElementById("courseSelect").value = student.course?.id || "";
+
+    const subjectSelect = document.getElementById("subjectSelect");
+    const selectedIds = student.subjects?.map(s => s.id) || [];
+
+    Array.from(subjectSelect.options).forEach(opt => {
+        opt.selected = selectedIds.includes(parseInt(opt.value));
+    });
+
+    window.scrollTo(0, 0); // Scroll to top for visibility
+}
+
+async function deleteStudent(id) {
+    if (confirm("Are you sure you want to delete this student?")) {
+        await fetch(`${API_BASE}/students/${id}`, {
+            method: "DELETE"
+        });
+        await loadStudents();
+    }
+}
+
+
+
+        document.getElementById("studentForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const id = document.getElementById("studentId").value;
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const courseId = document.getElementById("courseSelect").value;
+    const subjectSelect = document.getElementById("subjectSelect");
+    const subjectIds = Array.from(subjectSelect.selectedOptions).map(opt => opt.value);
+
+    const student = {
+        name,
+        email,
+        course: { id: courseId },
+        subjects: subjectIds.map(id => ({ id }))
+    };
+
+    const method = id ? "PUT" : "POST";
+    const url = id ? `${API_BASE}/students/${id}` : `${API_BASE}/students`;
+
+    await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(student)
+    });
+
+    document.getElementById("studentForm").reset();
+    document.getElementById("studentId").value = "";
+    await loadStudents();
+});
+
+
+        // Initial load
+        loadCourses();
+        loadSubjects();
+        loadStudents();
+    </script>
+</body>
+</html>
